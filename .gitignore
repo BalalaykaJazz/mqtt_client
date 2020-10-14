@@ -1,2 +1,7 @@
 # Project exclude paths
 /venv/
+misc.xml
+modules.xml
+new_sensor.iml
+vcs.xml
+inspectionprofiles
