@@ -1,6 +1,7 @@
 # Project exclude paths
 /venv/
 misc.xml
+config.py
 modules.xml
 new_sensor.iml
 vcs.xml
