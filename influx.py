@@ -1,16 +1,17 @@
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
-from config import influx_settings, value_types, json
+from config import get_settings, json
 
 connect = []
 
 
 def connection_to_influx():
     # get setting for connect to influx
-    bucket = influx_settings.get("bucket")
-    org = influx_settings.get("org")
-    token = influx_settings.get("token")
-    url = influx_settings.get("url")
+    influx_settings = get_settings("influx_settings")
+    bucket = influx_settings.bucket
+    org = influx_settings.org
+    token = influx_settings.token
+    url = influx_settings.url
 
     # connect to influx
     client = InfluxDBClient(url=url, token=token, org=org)
@@ -39,6 +40,10 @@ def convert_value(type_value, value):
             return None
 
 
+def get_type_value_from_name(value_types, type_name):
+    return getattr(value_types, type_name)
+
+
 def prepare_data(topic, value):
     # get names to write to Influx
     result = topic.split("/")
@@ -54,7 +59,7 @@ def prepare_data(topic, value):
         return create_record(field_value=value)
 
     # convert value to required type
-    type_value = value_types[kwargs["type_name"]]
+    type_value = get_type_value_from_name(get_settings("value_types"), kwargs["type_name"])
     converted_value = convert_value(type_value, value)
 
     if converted_value is None:
@@ -69,4 +74,5 @@ def prepare_data(topic, value):
 
 def write_influx(topic, value):
     bucket, org, write_api = connect
+    prepare_data(topic, value)
     write_api.write(bucket=bucket, org=org, record=prepare_data(topic, value))
