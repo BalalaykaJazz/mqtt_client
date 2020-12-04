@@ -1,7 +1,15 @@
 import paho.mqtt.client as mqtt
-from config import get_settings
+from config import get_settings, get_topic
 from influx import write_influx
 from datetime import datetime
+
+selected_topics = []
+
+
+def subscribe(_selected_topics):
+    """if _selected_topics is empty means subscribe to all topic"""
+    global selected_topics
+    selected_topics = _selected_topics
 
 
 def connection_to_broker():
@@ -37,7 +45,12 @@ def subscribe_to_all(_client, qos=1):
 def on_connect(_client, userdata, flags, rc):
     label = get_settings("mqtt_connection_status")[rc] if rc in range(0, 6) else "Currently unused"
     print(f"Connection to broker: {label}")
-    subscribe_to_all(_client)
+
+    if selected_topics:
+        for topic in selected_topics:
+            subscribe_to_topic(_client, get_topic(topic))
+    else:
+        subscribe_to_all(_client)
 
 
 def on_disconnect(_client, userdata, rc):

@@ -8,6 +8,10 @@ def get_settings(name):
     return _settings.get(name)
 
 
+def get_topic(name):
+    return getattr(get_settings("topics"), name)
+
+
 def save_settings():
     """Save settings to json"""
     with open('settings.json', 'w', encoding='utf-8') as file:

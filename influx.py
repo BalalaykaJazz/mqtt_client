@@ -1,6 +1,6 @@
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
-from config import get_settings, json
+from config import get_settings, get_topic, json
 
 connect = []
 
