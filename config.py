@@ -1,34 +1,51 @@
 import json
+from collections import namedtuple
 
-mqtt_connection_status = {0: "Successful",
-                          1: "Connection refused – incorrect protocol version",
-                          2: "Connection refused – invalid client identifier",
-                          3: "Connection refused – server unavailable",
-                          4: "Connection refused – bad username or password",
-                          5: "Connection refused – not authorised",
-                          6: "Currently unused"}
-
-value_types = {"sendmail": str, "alive": str, "sensor_baselog": str, "log": str, "info": str, "time_up": str,
-               "temp_in": float, "temp_out": float,
-               "b1": float, "b2": float,
-               "sct013_1": float, "sct013_2": float, "sct013_3": float, "sct013x3": float,
-               "rtdi1": float, "rtdi2": float, "rtdi3": float, "rtdi4": float, "rtdi5": float}
-
-mqtt_settings = {}
-influx_settings = {}
-topics = {}  # Attention. If you add a new topic, do not forget to change prepare_data in influx.py
+_settings = {}
 
 
-def load_settings():
-    with open('settings.json', 'r', encoding='utf-8') as file2:
-
-        settings = json.load(file2)
-        global mqtt_settings
-        mqtt_settings = settings.get("mqtt_settings")
-        global influx_settings
-        influx_settings = settings.get("influx_settings")
-        global topics
-        topics = settings.get("topics")
+def get_settings(name):
+    return _settings.get(name)
 
 
-load_settings()
+def get_topic(name):
+    return getattr(get_settings("topics"), name)
+
+
+def save_settings():
+    """Save settings to json"""
+    with open('settings.json', 'w', encoding='utf-8') as file:
+        file.write(json.dumps(_settings.mqtt_connection_status, indent=4))
+
+
+def check_settings():
+    # settings shouldn't be empty
+    for setting in _settings:
+        if not setting:
+            print("Settings are incorrect")
+            return False
+
+    return True
+
+
+def from_dict_to_namedtuple(name, original_dict):
+    return namedtuple(name, original_dict.keys())(*original_dict.values())
+
+
+def load_and_check_settings():
+    """Load from settings.json mqtt and influx settings, topics and value types"""
+    with open("settings.json", encoding="utf-8") as file:
+
+        settings = json.load(file)  # from
+        global _settings  # to
+
+        # mqtt_connection_status == tuple and other namedtuple
+        _settings["mqtt_connection_status"] = tuple(settings.get("mqtt_connection_status"))
+        _settings["mqtt_settings"] = from_dict_to_namedtuple("mqtt_settings", settings.get("mqtt_settings"))
+        _settings["influx_settings"] = from_dict_to_namedtuple("influx_settings", settings.get("influx_settings"))
+        _settings["topics"] = from_dict_to_namedtuple("topics", settings.get("topics"))
+
+        value_types_dict = {x[0]: str if x[1] == "str" else float for x in settings.get("value_types").items()}
+        _settings["value_types"] = from_dict_to_namedtuple("value_types", value_types_dict)
+
+    return check_settings()
