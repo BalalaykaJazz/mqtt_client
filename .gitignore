@@ -2,7 +2,7 @@
 /venv/
 misc.xml
 settings.json
-retain_log
+event_log
 modules.xml
 new_sensor.iml
 vcs.xml

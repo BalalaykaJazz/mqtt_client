@@ -1,6 +1,7 @@
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from config import get_settings, get_topic, json
+from log import save_event
 
 connect = []
 
@@ -16,10 +17,17 @@ def connection_to_influx():
     # connect to influx
     client = InfluxDBClient(url=url, token=token, org=org)
     write_api = client.write_api(write_options=SYNCHRONOUS)
-    print(f"Connection to InfluxDB: Successful")
 
     global connect
-    connect = [bucket, org, write_api]
+    if client.health().status == "pass":
+        connect = [bucket, org, write_api]
+        print("Connection to InfluxDB: Successful")
+    else:
+        connect = None
+        error_message = f"Connection to InfluxDB: Fail; Reason: {client.health().message}"
+        print(error_message)
+        save_event(error_message)
+
     return connect
 
 

@@ -1,26 +1,35 @@
 #!/usr/bin/env python
 from mqtt import connection_to_broker, start_mqtt, subscribe
 from influx import connection_to_influx
+from log import save_event
 import config
 
 
 def start():
-    if config.load_and_check_settings():
-        print("Loading settings: Successful")
+    error_text = config.load_and_check_settings()
+    if not error_text:
+        print("Loading config: Successful")
     else:
-        print("Execution completed")
+        error_message = f"Loading config: Fail; Reason: {error_text}"
+        print(error_message)
+        save_event(error_message)
         return
 
-    client = connection_to_broker()
-    connection_to_influx()
+    mqtt_connection = connection_to_broker()
+    if mqtt_connection is None:
+        return
+
+    influx_connection = connection_to_influx()
+    if influx_connection is None:
+        return
 
     # FULL MODE
     subscribe([])
 
     # DEBUG MODE:
-    # subscribe(["MOXA_rtdi0", "MOXA_rtdi1", "MOXA_rtdi2", "MOXA_rtdi3", "MOXA_rtdi4", "MOXA_rtdi5"])
+    # subscribe(["PZEM_CURRENT"])
 
-    start_mqtt(client)
+    start_mqtt(mqtt_connection)
 
 
 if __name__ == "__main__":
