@@ -73,7 +73,7 @@ def on_message(_client, userdata, message):
         save_event(message.topic, "retain message", value)
         return
 
-    print(f"Message received. Topic: {message.topic}, value: {value}")
+    # print(f"Message received. Topic: {message.topic}, value: {value}")
     write_influx(message.topic, value)
 
 
