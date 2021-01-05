@@ -1,5 +1,6 @@
 import json
 from collections import namedtuple
+from log import save_event
 
 _settings = {}
 
@@ -20,12 +21,40 @@ def save_settings():
 
 def check_settings():
     # settings shouldn't be empty
-    for setting in _settings:
-        if not setting:
-            print("Settings are incorrect")
-            return False
+    if not _settings:
+        return "Settings is empty"
 
-    return True
+    # settings must contain required fields
+    correct_settings = ("mqtt_connection_status", "mqtt_settings", "influx_settings", "topics", "value_types")
+    for setting in correct_settings:
+        if setting not in _settings:
+            return f"Settings don't contain filed {setting}"
+
+    correct_mqtt_settings = ("broker_url", "broker_port", "mqtt_login", "mqtt_pass")
+    _mqtt_settings = _settings["mqtt_settings"]
+    for setting in correct_mqtt_settings:
+        try:
+            getattr(_mqtt_settings, setting)
+        except AttributeError:
+            return f"Mqtt_settings don't contain filed {setting}"
+
+    correct_influx_settings = ("bucket", "org", "token", "url")
+    _influx_settings = _settings["influx_settings"]
+    for setting in correct_influx_settings:
+        try:
+            getattr(_influx_settings, setting)
+        except AttributeError:
+            return f"Influx_settings don't contain filed {setting}"
+
+    # a value must be specified for each topic
+    names_value_types = _settings["value_types"]._fields
+    for topic in _settings["topics"]:
+        type_name = topic.split("/")[-1]
+
+        if type_name not in names_value_types:
+            return f"Value_types don't contain filed {type_name}"
+
+    return ""
 
 
 def from_dict_to_namedtuple(name, original_dict):
@@ -48,4 +77,13 @@ def load_and_check_settings():
         value_types_dict = {x[0]: str if x[1] == "str" else float for x in settings.get("value_types").items()}
         _settings["value_types"] = from_dict_to_namedtuple("value_types", value_types_dict)
 
-    return check_settings()
+        error_text = check_settings()
+
+        if error_text == "":
+            print("Loading config: Successful")
+            result = True
+        else:
+            save_event(f"Loading config: Fail; Reason: {error_text}")
+            result = None
+
+    return result

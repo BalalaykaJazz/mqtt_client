@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 from config import get_settings, get_topic
 from influx import write_influx
-from datetime import datetime
+from log import save_event
 
 selected_topics = []
 
@@ -26,9 +26,15 @@ def connection_to_broker():
     _client.on_disconnect = on_disconnect
     _client.on_message = on_message
     _client.username_pw_set(username=mqtt_login, password=mqtt_pass)
-    _client.connect(broker_url, broker_port, keepalive=10)
 
-    print("Connection to mqtt: Successful")
+    try:
+        _client.connect(broker_url, broker_port, keepalive=10)
+        print("Connection to mqtt: Successful")
+    except Exception as err:
+        _client = None
+        error_message = f"Connection to mqtt: Fail; Reason: {str(err)}"
+        print(error_message)
+        save_event(error_message)
 
     return _client
 
@@ -46,7 +52,7 @@ def on_connect(_client, userdata, flags, rc):
     label = get_settings("mqtt_connection_status")[rc] if rc in range(0, 6) else "Currently unused"
     print(f"Connection to broker: {label}")
 
-    if selected_topics:
+    if selected_topics:  # Debug mode
         for topic in selected_topics:
             subscribe_to_topic(_client, get_topic(topic))
     else:
@@ -64,11 +70,12 @@ def on_message(_client, userdata, message):
         return
 
     if message.retain == 1:
-        with open("retain_log", "a") as log:
-            print(datetime.now(), message.topic, value, file=log)
+        save_event(message.topic, "retain message", value)
         return
 
-    print(f"Message received. Topic: {message.topic}, value: {value}")
+    if selected_topics:  # Debug mode
+        print(f"Message received. Topic: {message.topic}, value: {value}")
+
     write_influx(message.topic, value)
 
 
