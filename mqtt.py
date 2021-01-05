@@ -52,7 +52,7 @@ def on_connect(_client, userdata, flags, rc):
     label = get_settings("mqtt_connection_status")[rc] if rc in range(0, 6) else "Currently unused"
     print(f"Connection to broker: {label}")
 
-    if selected_topics:
+    if selected_topics:  # Debug mode
         for topic in selected_topics:
             subscribe_to_topic(_client, get_topic(topic))
     else:
@@ -73,7 +73,9 @@ def on_message(_client, userdata, message):
         save_event(message.topic, "retain message", value)
         return
 
-    # print(f"Message received. Topic: {message.topic}, value: {value}")
+    if selected_topics:  # Debug mode
+        print(f"Message received. Topic: {message.topic}, value: {value}")
+
     write_influx(message.topic, value)
 
 

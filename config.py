@@ -1,5 +1,6 @@
 import json
 from collections import namedtuple
+from log import save_event
 
 _settings = {}
 
@@ -76,4 +77,13 @@ def load_and_check_settings():
         value_types_dict = {x[0]: str if x[1] == "str" else float for x in settings.get("value_types").items()}
         _settings["value_types"] = from_dict_to_namedtuple("value_types", value_types_dict)
 
-    return check_settings()
+        error_text = check_settings()
+
+        if error_text == "":
+            print("Loading config: Successful")
+            result = True
+        else:
+            save_event(f"Loading config: Fail; Reason: {error_text}")
+            result = None
+
+    return result

@@ -1,7 +1,8 @@
-from influxdb_client import InfluxDBClient, Point
+from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import SYNCHRONOUS
-from config import get_settings, get_topic, json
+from config import get_settings, json
 from log import save_event
+from datetime import datetime
 
 connect = []
 
@@ -31,56 +32,68 @@ def connection_to_influx():
     return connect
 
 
-def create_record(field_value, table_name="unknown", device_name="unknown", type_name="unknown"):
-    return Point(table_name).tag("device", device_name).tag("type", type_name).field("value", field_value)
+def get_current_date():
+    return datetime.utcnow().isoformat() + "Z"
 
 
-def convert_value(type_value, value):
-
-    try:
-        return type_value(value)  # convert string to type, example - float
+def convert_value(type_value, value) -> tuple:
+    try:  # try convert string to value type, example - float
+        return type_value(value), get_current_date()
     except ValueError:
-        try:
-            d = json.loads(value)  # dict
-            value_string = d.get("value")  # string
-            return convert_value(type_value, value_string)
+        try:  # try convert json to value type
+            value_in_dict = json.loads(value)
+
+            # check correct date
+            year = value_in_dict.get("timestamp")[:4]
+            date_from_json = get_current_date() if year == "1970" else value_in_dict.get("timestamp")
+
+            return type_value(value_in_dict.get("value")), date_from_json
         except json.JSONDecodeError:
-            return None
+            return None, None
 
 
 def get_type_value_from_name(value_types, type_name):
     return getattr(value_types, type_name)
 
 
-def prepare_data(topic, value):
-    # get names to write to Influx
+def prepare_data(topic, value) -> dict:
+    """Get names fields to write to Influx"""
     result = topic.split("/")
-    if len(result) == 5:
-        kwargs = {"table_name": result[3], "device_name": result[2], "type_name": result[-1]}
-    elif len(result) == 3:
-        kwargs = {"table_name": result[1], "type_name": result[-1]}
+    if len(result) == 3:
+        prepared_data = {"measurement": result[1], "tags": {}}
+    elif len(result) == 5:
+        prepared_data = {"measurement": result[3], "tags": {"device": result[2]}}
     elif len(result) == 6:
-        kwargs = {"table_name": result[4], "device_name": result[2], "type_name": result[-1]}
+        prepared_data = {"measurement": result[4], "tags": {"device": result[2]}}
     elif len(result) == 7:
-        kwargs = {"table_name": result[3], "device_name": result[5], "type_name": result[-1]}
+        prepared_data = {"measurement": result[3], "tags": {"device": result[5]}}
     else:
-        return create_record(field_value=value)
+        save_event(f"Unknown topic format: {topic}. Skip")
+        return None
 
-    # convert value to required type
-    type_value = get_type_value_from_name(get_settings("value_types"), kwargs["type_name"])
+    type_name = result[-1]
+    prepared_data["tags"]["type"] = type_name
+    # prepared_data["tags"]["user_name"] = result[1]
+
+    # convert value (string) to required type
+    type_value = get_type_value_from_name(get_settings("value_types"), type_name)
     converted_value = convert_value(type_value, value)
 
-    if converted_value is None:
-        return create_record(field_value=value)
-    else:
-        kwargs["field_value"] = converted_value
+    if converted_value[0] is None:
+        save_event(f"The value is none from topic: {topic}")
+        return None
+
+    prepared_data["fields"] = {"value": converted_value[0]}
+    prepared_data["time"] = str(converted_value[1])
 
     # select a table by type
-    kwargs["table_name"] = kwargs["table_name"] + "_float" if type_value is float else "_str"
-    return create_record(**kwargs)
+    prepared_data["measurement"] += "_float" if type_value is float else "_str"
+    return prepared_data
 
 
 def write_influx(topic, value):
-    bucket, org, write_api = connect
-    prepare_data(topic, value)
-    write_api.write(bucket=bucket, org=org, record=prepare_data(topic, value))
+    data_to_write = prepare_data(topic, value)
+
+    if data_to_write is not None:
+        bucket, org, write_api = connect
+        write_api.write(bucket=bucket, org=org, record=data_to_write)
