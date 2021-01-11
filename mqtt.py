@@ -49,6 +49,7 @@ def subscribe_to_all(_client, qos=1):
 
 
 def on_connect(_client, userdata, flags, rc):
+    """Connect and subscribe. Debug mode - only selected topics"""
     label = get_settings("mqtt_connection_status")[rc] if rc in range(0, 6) else "Currently unused"
     print(f"Connection to broker: {label}")
 

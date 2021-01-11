@@ -32,7 +32,7 @@ def connection_to_influx():
     return connect
 
 
-def get_current_date():
+def get_current_date() -> str:
     return datetime.utcnow().isoformat() + "Z"
 
 
@@ -69,7 +69,7 @@ def prepare_data(topic, value) -> dict:
         prepared_data = {"measurement": result[3], "tags": {"device": result[5]}}
     else:
         save_event(f"Unknown topic format: {topic}. Skip")
-        return None
+        return {}
 
     type_name = result[-1]
     prepared_data["tags"]["type"] = type_name
@@ -81,7 +81,7 @@ def prepare_data(topic, value) -> dict:
 
     if converted_value[0] is None:
         save_event(f"The value is none from topic: {topic}")
-        return None
+        return {}
 
     prepared_data["fields"] = {"value": converted_value[0]}
     prepared_data["time"] = str(converted_value[1])
@@ -94,6 +94,6 @@ def prepare_data(topic, value) -> dict:
 def write_influx(topic, value):
     data_to_write = prepare_data(topic, value)
 
-    if data_to_write is not None:
+    if data_to_write:
         bucket, org, write_api = connect
         write_api.write(bucket=bucket, org=org, record=data_to_write)
