@@ -32,6 +32,7 @@ def connection_to_influx():
 
 
 def get_current_date() -> str:
+    """Example: 2021-01-19T17:17:47.989506Z"""
     return datetime.utcnow().isoformat() + "Z"
 
 
