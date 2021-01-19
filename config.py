@@ -40,7 +40,7 @@ def check_settings() -> str:
         except AttributeError:
             return f"Mqtt_settings don't contain filed {current_setting}"
 
-    correct_influx_settings = ("bucket", "org", "token", "url")
+    correct_influx_settings = ("org", "token", "url")
     _influx_settings = _settings["influx_settings"]
     for current_setting in correct_influx_settings:
         try:
@@ -70,11 +70,12 @@ def load_and_check_settings() -> bool:
         settings = json.load(file)  # from
         global _settings  # to
 
-        # mqtt_connection_status == tuple and other namedtuple
+        # mqtt_connection_status and used_bucket == tuple and other namedtuple
         _settings["mqtt_connection_status"] = tuple(settings.get("mqtt_connection_status"))
         _settings["mqtt_settings"] = from_dict_to_namedtuple("mqtt_settings", settings.get("mqtt_settings"))
         _settings["influx_settings"] = from_dict_to_namedtuple("influx_settings", settings.get("influx_settings"))
         _settings["topics"] = from_dict_to_namedtuple("topics", settings.get("topics"))
+        _settings["used_bucket"] = tuple(settings.get("used_bucket"))
 
         # converting to necessary type from string
         value_types_dict = {x[0]: str if x[1] == "str" else float for x in settings.get("value_types").items()}

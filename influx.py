@@ -10,7 +10,6 @@ connect = []
 def connection_to_influx():
     # get setting for connect to influx
     influx_settings = get_settings("influx_settings")
-    bucket = influx_settings.bucket
     org = influx_settings.org
     token = influx_settings.token
     url = influx_settings.url
@@ -21,7 +20,7 @@ def connection_to_influx():
 
     global connect
     if client.health().status == "pass":
-        connect = [bucket, org, write_api]
+        connect = [org, write_api]
         print("Connection to InfluxDB: Successful")
     else:
         connect = None
@@ -56,6 +55,11 @@ def get_type_value_from_name(value_types, type_name):
     return getattr(value_types, type_name)
 
 
+def get_bucket(name_bucket) -> str:
+    """get name "other" if influx table is not created"""
+    return name_bucket if name_bucket in get_settings("used_bucket") else "other"
+
+
 def prepare_data(topic, value) -> dict:
     """Get names fields to write to Influx"""
     result = topic.split("/")
@@ -73,7 +77,7 @@ def prepare_data(topic, value) -> dict:
 
     type_name = result[-1]
     prepared_data["tags"]["type"] = type_name
-    # prepared_data["tags"]["user_name"] = result[1]
+    prepared_data["bucket"] = get_bucket(result[1])
 
     # convert value (string) to required type
     type_value = get_type_value_from_name(get_settings("value_types"), type_name)
@@ -95,5 +99,5 @@ def write_influx(topic, value):
     data_to_write = prepare_data(topic, value)
 
     if data_to_write:
-        bucket, org, write_api = connect
-        write_api.write(bucket=bucket, org=org, record=data_to_write)
+        org, write_api = connect
+        write_api.write(bucket=data_to_write.get("bucket"), org=org, record=data_to_write)
