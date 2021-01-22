@@ -36,24 +36,24 @@ def get_current_date() -> str:
     return datetime.utcnow().isoformat() + "Z"
 
 
-def convert_value(type_value, value) -> tuple:
-    try:  # try convert string to value type, example - float
-        return type_value(value), get_current_date()
+def convert_value(value) -> tuple:
+    try:  # convert from str to float
+        return float(value), get_current_date()
     except ValueError:
-        try:  # try convert json to value type
-            value_in_dict = json.loads(value)
+        pass
 
-            # check correct date
-            year = value_in_dict.get("timestamp")[:4]
-            date_from_json = get_current_date() if year == "1970" else value_in_dict.get("timestamp")
+    try:  # convert from json to float
+        value_in_dict = json.loads(value)
 
-            return type_value(value_in_dict.get("value")), date_from_json
-        except json.JSONDecodeError:
-            return None, None
+        # check correct date
+        ts = value_in_dict.get("timestamp")
+        date_from_json = get_current_date() if ts[:4] == "1970" else ts
 
+        return float(value_in_dict.get("value")), date_from_json
+    except json.JSONDecodeError:
+        pass
 
-def get_type_value_from_name(value_types, type_name):
-    return getattr(value_types, type_name)
+    return value, get_current_date()  # normal string
 
 
 def get_bucket(name_bucket) -> str:
@@ -80,9 +80,8 @@ def prepare_data(topic, value) -> dict:
     prepared_data["tags"]["type"] = type_name
     prepared_data["bucket"] = get_bucket(result[1])
 
-    # convert value (string) to required type
-    type_value = get_type_value_from_name(get_settings("value_types"), type_name)
-    converted_value = convert_value(type_value, value)
+    # convert value from string or json
+    converted_value = convert_value(value)
 
     if converted_value[0] is None:
         save_event(f"The value is none from topic: {topic}")
@@ -92,7 +91,7 @@ def prepare_data(topic, value) -> dict:
     prepared_data["time"] = str(converted_value[1])
 
     # select a table by type
-    prepared_data["measurement"] += "_float" if type_value is float else "_str"
+    prepared_data["measurement"] += "_float" if isinstance(prepared_data["fields"]["value"], float) else "_str"
     return prepared_data
 
 

@@ -17,7 +17,7 @@ def start():
         return
 
     # FULL MODE: subscribe to all known topics. Without notifications
-    subscribe([])
+    # subscribe([])
 
     # OR
 
