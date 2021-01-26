@@ -86,6 +86,10 @@ def prepare_data(topic, value) -> dict:
     if converted_value[0] is None:
         save_event(f"The value is none from topic: {topic}")
         return {}
+    elif converted_value[0] in (-127, -128) and type_name in ("temp_out", "temp_in"):
+        # (-127: controller lost sensor, -128: sensor is initializing)
+        save_event(f"Skip temp {converted_value[0]} from topic: {topic}")
+        return {}
 
     prepared_data["fields"] = {"value": converted_value[0]}
     prepared_data["time"] = str(converted_value[1])
