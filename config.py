@@ -27,7 +27,7 @@ def check_settings() -> str:
         return "Settings is empty"
 
     # settings must contain required fields
-    correct_settings = ("mqtt_connection_status", "mqtt_settings", "influx_settings", "topics", "value_types")
+    correct_settings = ("mqtt_connection_status", "mqtt_settings", "influx_settings", "topics")
     for current_setting in correct_settings:
         if current_setting not in _settings:
             return f"Settings don't contain filed {current_setting}"
@@ -40,21 +40,13 @@ def check_settings() -> str:
         except AttributeError:
             return f"Mqtt_settings don't contain filed {current_setting}"
 
-    correct_influx_settings = ("bucket", "org", "token", "url")
+    correct_influx_settings = ("org", "token", "url")
     _influx_settings = _settings["influx_settings"]
     for current_setting in correct_influx_settings:
         try:
             getattr(_influx_settings, current_setting)
         except AttributeError:
             return f"Influx_settings don't contain filed {current_setting}"
-
-    # a value must be specified for each topic
-    names_value_types = _settings["value_types"]._fields
-    for topic in _settings["topics"]:
-        type_name = topic.split("/")[-1]
-
-        if type_name not in names_value_types:
-            return f"Value_types don't contain filed {type_name}"
 
     return ""
 
@@ -70,15 +62,12 @@ def load_and_check_settings() -> bool:
         settings = json.load(file)  # from
         global _settings  # to
 
-        # mqtt_connection_status == tuple and other namedtuple
+        # mqtt_connection_status and used_bucket == tuple and other namedtuple
         _settings["mqtt_connection_status"] = tuple(settings.get("mqtt_connection_status"))
         _settings["mqtt_settings"] = from_dict_to_namedtuple("mqtt_settings", settings.get("mqtt_settings"))
         _settings["influx_settings"] = from_dict_to_namedtuple("influx_settings", settings.get("influx_settings"))
         _settings["topics"] = from_dict_to_namedtuple("topics", settings.get("topics"))
-
-        # converting to necessary type from string
-        value_types_dict = {x[0]: str if x[1] == "str" else float for x in settings.get("value_types").items()}
-        _settings["value_types"] = from_dict_to_namedtuple("value_types", value_types_dict)
+        _settings["used_bucket"] = tuple(settings.get("used_bucket"))
 
         error_text = check_settings()
 

@@ -16,13 +16,13 @@ def start():
     if influx_connection is None:
         return
 
-    # FULL MODE
-    subscribe([])
+    # FULL MODE: subscribe to all known topics. Without notifications
+    # subscribe([])
 
     # OR
 
-    # DEBUG MODE:
-    # subscribe(["MOXA_rtdi0"])
+    # DEBUG MODE: subscribe to selected topics. Notification for each topic
+    subscribe(["SENSOR_SCT_3ph"])
     # subscribe(["MOXA_rtdi1"])
     # subscribe(["MOXA_rtdi2"])
     # subscribe(["MOXA_rtdi3"])
