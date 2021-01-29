@@ -37,19 +37,27 @@ def get_current_date() -> str:
 
 
 def convert_value(value) -> tuple:
-    try:  # convert from str to float
+    try:  # maybe float is here
         return float(value), get_current_date()
     except ValueError:
         pass
 
-    try:  # convert from json to float
+    try:  # Maybe it's a json
         value_in_dict = json.loads(value)
 
-        # check correct date
-        ts = value_in_dict.get("timestamp")
-        date_from_json = get_current_date() if ts[:4] == "1970" else ts
+        # get value from json
+        if "value" in value_in_dict:
+            value_from_json = value_in_dict.get("value")
+        elif "val" in value_in_dict:
+            value_from_json = value_in_dict.get("val")
+        else:
+            return None, None  # incorrect json
 
-        return float(value_in_dict.get("value")), date_from_json
+        # get date from json or get current time
+        date = get_current_date() if value_in_dict.get("timestamp") is None else value_in_dict.get("timestamp")
+        date_from_json = get_current_date() if date[:4] == "1970" else date
+
+        return float(value_from_json), date_from_json
     except json.JSONDecodeError:
         pass
 
@@ -65,37 +73,31 @@ def prepare_data(topic, value) -> dict:
     """Get names fields to write to Influx"""
     result = topic.split("/")
     if len(result) == 3:
-        prepared_data = {"measurement": result[1], "tags": {}}
-    elif len(result) == 5:
-        prepared_data = {"measurement": result[3], "tags": {"device": result[2]}}
-    elif len(result) == 6:
-        prepared_data = {"measurement": result[4], "tags": {"device": result[2]}}
-    elif len(result) == 7:
-        prepared_data = {"measurement": result[3], "tags": {"device": result[5]}}
+        prepared_data = {"tags": {}}
+    elif len(result) >= 5:
+        prepared_data = {"tags": {"device": result[2].lower()}}
     else:
         save_event(f"Unknown topic format: {topic}. Skip")
         return {}
 
-    type_name = result[-1]
-    prepared_data["tags"]["type"] = type_name
-    prepared_data["bucket"] = get_bucket(result[1])
+    prepared_data["bucket"] = get_bucket(result[1]).lower()  # database
+    prepared_data["measurement"] = result[-1].lower()  # table
 
-    # convert value from string or json
-    converted_value = convert_value(value)
+    unpacked_response = convert_value(value)  # pair converted value and time
+    converted_value = unpacked_response[0]
 
-    if converted_value[0] is None:
+    if converted_value is None:
         save_event(f"The value is none from topic: {topic}")
         return {}
-    elif int(converted_value[0]) in (-127, -128) and type_name in ("temp_out", "temp_in"):
+    elif converted_value is float and int(converted_value) in (-127, -128) \
+            and prepared_data["measurement"] in ("temp_out", "temp_in"):
         # (-127: controller lost sensor, -128: sensor is initializing)
-        save_event(f"Skip temp {converted_value[0]} from topic: {topic}")
+        save_event(f"Skip temp {converted_value} from topic: {topic}")
         return {}
 
-    prepared_data["fields"] = {"value": converted_value[0]}
-    prepared_data["time"] = str(converted_value[1])
+    prepared_data["fields"] = {"value": converted_value}
+    prepared_data["time"] = str(unpacked_response[1])
 
-    # select a table by type
-    prepared_data["measurement"] += "_float" if isinstance(prepared_data["fields"]["value"], float) else "_str"
     return prepared_data
 
 
