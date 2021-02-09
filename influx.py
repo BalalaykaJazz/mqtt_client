@@ -1,4 +1,4 @@
-from influxdb_client import InfluxDBClient
+from influxdb_client import InfluxDBClient, rest
 from influxdb_client.client.write_api import SYNCHRONOUS
 from config import get_settings, json
 from log import save_event
@@ -106,4 +106,8 @@ def write_influx(topic, value):
 
     if data_to_write:
         org, write_api = connect
-        write_api.write(bucket=data_to_write.get("bucket"), org=org, record=data_to_write)
+
+        try:
+            write_api.write(bucket=data_to_write.get("bucket"), org=org, record=data_to_write)
+        except rest.ApiException:
+            save_event(f"Can't record topic: {topic}; value: {value}")
