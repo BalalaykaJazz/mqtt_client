@@ -45,9 +45,9 @@ def subscribe_to_all(_client, qos=1):
 def on_connect(_client, userdata, flags, rc):
     """Connect and subscribe. Debug mode - only selected topics"""
     label = get_settings("mqtt_connection_status")[rc] if rc in range(0, 6) else "Currently unused"
-    print(f"Connection to broker: {label}")
 
-    if selected_topics:  # Debug mode
+    if get_settings("DEBUG_MODE"):
+        print(f"Connection to broker: {label}")
         for topic in selected_topics:
             subscribe_to_topic(_client, get_topic(topic))
     else:
@@ -55,7 +55,8 @@ def on_connect(_client, userdata, flags, rc):
 
 
 def on_disconnect(_client, userdata, rc):
-    print("Client Got Disconnected")
+    if get_settings("DEBUG_MODE"):
+        print("Client Got Disconnected")
 
 
 def on_message(_client, userdata, message):
@@ -68,7 +69,7 @@ def on_message(_client, userdata, message):
         save_event(message.topic, "retain message", value)
         return
 
-    if selected_topics:  # Debug mode
+    if get_settings("DEBUG_MODE"):
         print(f"Message received. Topic: {message.topic}, value: {value}")
 
     write_influx(message.topic, value)
@@ -78,4 +79,5 @@ def start_mqtt(client):
     try:
         client.loop_forever()
     except KeyboardInterrupt:
-        print("Client Got Disconnected")
+        if get_settings("DEBUG_MODE"):
+            print("Client Got Disconnected")
