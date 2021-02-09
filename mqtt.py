@@ -14,11 +14,7 @@ def subscribe(_selected_topics):
 
 def connection_to_broker():
     # Settings
-    mqtt_settings = get_settings("mqtt_settings")
-    broker_url = mqtt_settings.broker_url
-    broker_port = mqtt_settings.broker_port
-    mqtt_login = mqtt_settings.mqtt_login
-    mqtt_pass = mqtt_settings.mqtt_pass
+    broker_url, broker_port, mqtt_login, mqtt_pass = get_settings("mqtt_settings")
 
     # Connection
     _client = mqtt.Client()
@@ -32,9 +28,7 @@ def connection_to_broker():
         print("Connection to mqtt: Successful")
     except Exception as err:
         _client = None
-        error_message = f"Connection to mqtt: Fail; Reason: {str(err)}"
-        print(error_message)
-        save_event(error_message)
+        save_event(f"Connection to mqtt: Fail; Reason: {str(err)}")
 
     return _client
 
