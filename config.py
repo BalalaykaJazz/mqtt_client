@@ -19,34 +19,32 @@ def save_settings():
         file.write(json.dumps(_settings["mqtt_connection_status"], indent=4))
 
 
-def check_settings() -> str:
+def check_settings(settings) -> str:
     """If something is wrong, we will return error description"""
 
-    # settings shouldn't be empty
-    if not _settings:
-        return "Settings is empty"
-
     # settings must contain required fields
-    correct_settings = ("mqtt_connection_status", "mqtt_settings", "influx_settings", "topics")
+    correct_settings = ("General", "mqtt_connection_status", "mqtt_settings", "influx_settings", "topics", "used_bucket")
     for current_setting in correct_settings:
-        if current_setting not in _settings:
-            return f"Settings don't contain filed {current_setting}"
+        if current_setting not in settings:
+            return f"Settings don't contain field {current_setting}"
+
+    correct_general = ("EVENTLOG_ENABLE", "DEBUG_MODE")
+    _general_settings = settings["General"]
+    for current_setting in correct_general:
+        if current_setting not in _general_settings:
+            return f"General settings don't contain field {current_setting}"
 
     correct_mqtt_settings = ("broker_url", "broker_port", "mqtt_login", "mqtt_pass")
-    _mqtt_settings = _settings["mqtt_settings"]
+    _mqtt_settings = settings["mqtt_settings"]
     for current_setting in correct_mqtt_settings:
-        try:
-            getattr(_mqtt_settings, current_setting)
-        except AttributeError:
-            return f"Mqtt_settings don't contain filed {current_setting}"
+        if _mqtt_settings.get(current_setting) is None:
+            return f"Mqtt_settings don't contain field {current_setting}"
 
     correct_influx_settings = ("org", "token", "url")
-    _influx_settings = _settings["influx_settings"]
+    _influx_settings = settings["influx_settings"]
     for current_setting in correct_influx_settings:
-        try:
-            getattr(_influx_settings, current_setting)
-        except AttributeError:
-            return f"Influx_settings don't contain filed {current_setting}"
+        if _influx_settings.get(current_setting) is None:
+            return f"Influx_settings don't contain field {current_setting}"
 
     return ""
 
@@ -57,25 +55,39 @@ def from_dict_to_namedtuple(name, original_dict):
 
 def load_and_check_settings() -> bool:
     """Load from settings.json mqtt and influx settings, topics and value types. Checking them"""
-    with open("settings.json", encoding="utf-8") as file:
 
-        settings = json.load(file)  # from
-        global _settings  # to
+    no_error = False
+    first_part_error = "Loading config: Fail; Reason:"
 
-        # mqtt_connection_status and used_bucket == tuple and other namedtuple
-        _settings["mqtt_connection_status"] = tuple(settings.get("mqtt_connection_status"))
-        _settings["mqtt_settings"] = from_dict_to_namedtuple("mqtt_settings", settings.get("mqtt_settings"))
-        _settings["influx_settings"] = from_dict_to_namedtuple("influx_settings", settings.get("influx_settings"))
-        _settings["topics"] = from_dict_to_namedtuple("topics", settings.get("topics"))
-        _settings["used_bucket"] = tuple(settings.get("used_bucket"))
+    try:
+        with open("settings.json", encoding="utf-8") as file:
 
-        error_text = check_settings()
+            settings = json.load(file)  # from
+            global _settings  # to
 
-        if error_text == "":
-            print("Loading config: Successful")
-            result = True
-        else:
-            save_event(f"Loading config: Fail; Reason: {error_text}")
-            result = False
+            error_text = check_settings(settings)
 
-    return result
+            if error_text == "":
+                # mqtt_connection_status and used_bucket == tuple and other namedtuple
+                _settings["mqtt_connection_status"] = tuple(settings.get("mqtt_connection_status"))
+                _settings["mqtt_settings"] = from_dict_to_namedtuple("mqtt_settings", settings.get("mqtt_settings"))
+                _settings["influx_settings"] = from_dict_to_namedtuple("influx_settings",
+                                                                       settings.get("influx_settings"))
+                _settings["topics"] = from_dict_to_namedtuple("topics", settings.get("topics"))
+                _settings["used_bucket"] = tuple(settings.get("used_bucket"))
+
+                _settings["DEBUG_MODE"] = settings.get("General").get("DEBUG_MODE")
+                _settings["EVENTLOG_ENABLE"] = settings.get("General").get("EVENTLOG_ENABLE")
+
+                print("Loading config: Successful")
+                no_error = True
+
+            else:
+                save_event(f"{first_part_error} {error_text}")
+
+    except FileNotFoundError:
+        save_event(f"{first_part_error} not found settings.json")
+    except json.decoder.JSONDecodeError:
+        save_event(f"{first_part_error} invalid file settings.json")
+
+    return no_error

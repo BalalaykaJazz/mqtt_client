@@ -16,18 +16,10 @@ def start():
     if influx_connection is None:
         return
 
-    # FULL MODE: subscribe to all known topics. Without notifications
-    # subscribe([])
-
-    # OR
-
-    # DEBUG MODE: subscribe to selected topics. Notification for each topic
-    subscribe(["SENSOR_SCT_3ph"])
-    # subscribe(["MOXA_rtdi1"])
-    # subscribe(["MOXA_rtdi2"])
-    # subscribe(["MOXA_rtdi3"])
-    # subscribe(["MOXA_rtdi4"])
-    # subscribe(["MOXA_rtdi5"])
+    if config.get_settings("DEBUG_MODE"):  # Subscribe to selected topics. Notification for each topic
+        subscribe(["MOXA_rtdi0"])
+    else:  # FULL MODE: subscribe to all known topics. Without notifications
+        subscribe([])
 
     start_mqtt(mqtt_connection)
 

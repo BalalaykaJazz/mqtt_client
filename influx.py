@@ -1,4 +1,4 @@
-from influxdb_client import InfluxDBClient
+from influxdb_client import InfluxDBClient, rest
 from influxdb_client.client.write_api import SYNCHRONOUS
 from config import get_settings, json
 from log import save_event
@@ -9,10 +9,7 @@ connect = []
 
 def connection_to_influx():
     # get setting for connect to influx
-    influx_settings = get_settings("influx_settings")
-    org = influx_settings.org
-    token = influx_settings.token
-    url = influx_settings.url
+    org, token, url = get_settings("influx_settings")
 
     # connect to influx
     client = InfluxDBClient(url=url, token=token, org=org)
@@ -24,9 +21,7 @@ def connection_to_influx():
         print("Connection to InfluxDB: Successful")
     else:
         connect = None
-        error_message = f"Connection to InfluxDB: Fail; Reason: {client.health().message}"
-        print(error_message)
-        save_event(error_message)
+        save_event(f"Connection to InfluxDB: Fail; Reason: {client.health().message}")
 
     return connect
 
@@ -61,7 +56,7 @@ def convert_value(value) -> tuple:
     except json.JSONDecodeError:
         pass
 
-    return value, get_current_date()  # normal string
+    return value, get_current_date()  # most likely this is string
 
 
 def get_bucket(name_bucket) -> str:
@@ -106,4 +101,8 @@ def write_influx(topic, value):
 
     if data_to_write:
         org, write_api = connect
-        write_api.write(bucket=data_to_write.get("bucket"), org=org, record=data_to_write)
+
+        try:
+            write_api.write(bucket=data_to_write.get("bucket"), org=org, record=data_to_write)
+        except rest.ApiException:
+            save_event(f"Can't record topic: {topic}; value: {value}")
