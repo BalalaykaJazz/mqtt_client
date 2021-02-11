@@ -1,7 +1,9 @@
 import json
+import os.path
 from collections import namedtuple
 from log import save_event
 
+settings_full_path = os.path.join(os.path.dirname(__file__), 'settings/settings.json')
 _settings = {}
 
 
@@ -15,7 +17,7 @@ def get_topic(name):
 
 def save_settings():
     """Save settings to json"""
-    with open('settings.json', 'w', encoding='utf-8') as file:
+    with open(settings_full_path, 'w', encoding='utf-8') as file:
         file.write(json.dumps(_settings["mqtt_connection_status"], indent=4))
 
 
@@ -60,7 +62,7 @@ def load_and_check_settings() -> bool:
     first_part_error = "Loading config: Fail; Reason:"
 
     try:
-        with open("settings.json", encoding="utf-8") as file:
+        with open(settings_full_path, encoding="utf-8") as file:
 
             settings = json.load(file)  # from
             global _settings  # to

@@ -17,7 +17,7 @@ def start():
         return
 
     if config.get_settings("DEBUG_MODE"):  # Subscribe to selected topics. Notification for each topic
-        subscribe(["MOXA_rtdi0"])
+        subscribe(["TEMP_OUT"])
     else:  # FULL MODE: subscribe to all known topics. Without notifications
         subscribe([])
 
