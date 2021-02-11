@@ -17,6 +17,7 @@ COPY ./settings.json      /home/mqtt/mqtt/
 RUN  chown mqtt\: ~mqtt
 
 USER mqtt
-CMD /home/mqtt/mqtt/autorun.sh
+#CMD /home/mqtt/mqtt/autorun.sh
+CMD ["/usr/bin/bash", "/home/mqtt/mqtt/autorun.sh"]
 #docker run -it --rm --mount type=bind,source="/home/san/",target=/home/san/ san:v1 /run.sh
 # docker run --rm -p 8086:8086 -v $(pwd)/influxdb:/var/lib/influxdb influxdb:1.8
