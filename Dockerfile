@@ -9,15 +9,13 @@ RUN cd ~mqtt; \
   su mqtt -c "./venv/bin/pip install wheel"; \
   su mqtt -c "./venv/bin/pip install certifi chardet \"idna<3\" influxdb influxdb-client \
               msgpack paho-mqtt pip python-dateutil pytz requests Rx setuptools six urllib3"; \
-  mkdir ~mqtt/mqtt;
+  mkdir ~mqtt/mqtt_client;
 
-COPY ./mqtt /home/mqtt/mqtt/
-COPY ./scripts/autorun.sh /home/mqtt/mqtt/
-COPY ./settings.json      /home/mqtt/mqtt/
-RUN  chown mqtt\: ~mqtt
+COPY ./pod_mqtt_client    /home/mqtt/mqtt_client/
+COPY ./scripts/autorun.sh /home/mqtt/mqtt_client/
+#COPY ./settings.json      /home/mqtt/mqtt_client/
+RUN  chown -R mqtt\: ~mqtt/mqtt_client
 
 USER mqtt
-#CMD /home/mqtt/mqtt/autorun.sh
-CMD ["/usr/bin/bash", "/home/mqtt/mqtt/autorun.sh"]
-#docker run -it --rm --mount type=bind,source="/home/san/",target=/home/san/ san:v1 /run.sh
-# docker run --rm -p 8086:8086 -v $(pwd)/influxdb:/var/lib/influxdb influxdb:1.8
+
+CMD ["/usr/bin/bash", "/home/mqtt/mqtt_client/autorun.sh"]
