@@ -11,7 +11,7 @@ RUN cd ~mqtt; \
               msgpack paho-mqtt pip python-dateutil pytz requests Rx setuptools six urllib3"; \
   mkdir ~mqtt/mqtt;
 
-COPY ./mqtt /home/mqtt/mqtt/
+COPY ./pod_mqtt_client /home/mqtt/mqtt/
 COPY ./scripts/autorun.sh /home/mqtt/mqtt/
 COPY ./settings.json      /home/mqtt/mqtt/
 RUN  chown mqtt\: ~mqtt
