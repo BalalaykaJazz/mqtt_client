@@ -59,7 +59,7 @@ def on_message(_client, userdata, message):
         return
 
     if message.retain == 1:
-        save_event(message.topic, "retain message", value)
+        # save_event(message.topic, "retain message", value)
         return
 
     if get_settings("DEBUG_MODE"):
