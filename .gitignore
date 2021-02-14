@@ -1,7 +1,7 @@
 # Project exclude paths
 /venv/
 misc.xml
-settings.json
+pod_mqtt_client/settings/settings.json
 event_log
 modules.xml
 new_sensor.iml

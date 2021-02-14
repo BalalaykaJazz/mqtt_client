@@ -3,14 +3,6 @@ from config import get_settings, get_topic
 from influx import write_influx
 from log import save_event
 
-selected_topics = []
-
-
-def subscribe(_selected_topics):
-    """if _selected_topics is empty means subscribe to all topic"""
-    global selected_topics
-    selected_topics = _selected_topics
-
 
 def connection_to_broker():
     # Settings
@@ -45,10 +37,12 @@ def subscribe_to_all(_client, qos=1):
 def on_connect(_client, userdata, flags, rc):
     """Connect and subscribe. Debug mode - only selected topics"""
     label = get_settings("mqtt_connection_status")[rc] if rc in range(0, 6) else "Currently unused"
+    print(f"Mqtt connection status: {label}")
 
     if get_settings("DEBUG_MODE"):
-        print(f"Connection to broker: {label}")
-        for topic in selected_topics:
+        print(f"Debug mode: ON", "Subscribe to topics: ", sep="\n")
+        for topic in get_settings("debug_subscribe"):
+            print(topic)
             subscribe_to_topic(_client, get_topic(topic))
     else:
         subscribe_to_all(_client)
@@ -66,7 +60,7 @@ def on_message(_client, userdata, message):
         return
 
     if message.retain == 1:
-        save_event(message.topic, "retain message", value)
+        # save_event(message.topic, "retain message", value)
         return
 
     if get_settings("DEBUG_MODE"):

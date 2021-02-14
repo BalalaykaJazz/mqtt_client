@@ -1,5 +1,5 @@
 from influxdb_client import InfluxDBClient, rest
-from influxdb_client.client.write_api import SYNCHRONOUS
+from influxdb_client.client.write_api import ASYNCHRONOUS
 from config import get_settings, json
 from log import save_event
 from datetime import datetime
@@ -13,7 +13,7 @@ def connection_to_influx():
 
     # connect to influx
     client = InfluxDBClient(url=url, token=token, org=org)
-    write_api = client.write_api(write_options=SYNCHRONOUS)
+    write_api = client.write_api(write_options=ASYNCHRONOUS)
 
     global connect
     if client.health().status == "pass":

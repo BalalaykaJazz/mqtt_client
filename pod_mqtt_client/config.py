@@ -30,7 +30,7 @@ def check_settings(settings) -> str:
         if current_setting not in settings:
             return f"Settings don't contain field {current_setting}"
 
-    correct_general = ("EVENTLOG_ENABLE", "DEBUG_MODE")
+    correct_general = ("EVENTLOG_ENABLE", "DEBUG_MODE", "debug_subscribe")
     _general_settings = settings["General"]
     for current_setting in correct_general:
         if current_setting not in _general_settings:
@@ -78,8 +78,7 @@ def load_and_check_settings() -> bool:
                 _settings["topics"] = from_dict_to_namedtuple("topics", settings.get("topics"))
                 _settings["used_bucket"] = tuple(settings.get("used_bucket"))
 
-                _settings["DEBUG_MODE"] = settings.get("General").get("DEBUG_MODE")
-                _settings["EVENTLOG_ENABLE"] = settings.get("General").get("EVENTLOG_ENABLE")
+                _settings.update(settings.get("General"))
 
                 print("Loading config: Successful")
                 no_error = True
