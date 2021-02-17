@@ -39,7 +39,7 @@ def check_settings(settings) -> str:
         if current_setting not in _general_settings:
             return f"General settings don't contain field {current_setting}"
 
-    correct_mqtt_settings = ("broker_url", "broker_port", "mqtt_login", "mqtt_pass")
+    correct_mqtt_settings = ("broker_url", "broker_port", "mqtt_login", "mqtt_pass", "tls")
     _mqtt_settings = settings["mqtt_settings"]
     for current_setting in correct_mqtt_settings:
         if _mqtt_settings.get(current_setting) is None:
