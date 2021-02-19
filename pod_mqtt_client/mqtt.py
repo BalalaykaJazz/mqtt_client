@@ -1,12 +1,12 @@
 import paho.mqtt.client as mqtt
-from config import get_settings, get_topic
+from config import get_settings, get_topic, get_full_path
 from influx import write_influx
 from log import save_event
 
 
 def connection_to_broker():
     # Settings
-    broker_url, broker_port, mqtt_login, mqtt_pass = get_settings("mqtt_settings")
+    broker_url, broker_port, mqtt_login, mqtt_pass, tls_settings = get_settings("mqtt_settings")
 
     # Connection
     _client = mqtt.Client()
@@ -14,6 +14,11 @@ def connection_to_broker():
     _client.on_disconnect = on_disconnect
     _client.on_message = on_message
     _client.username_pw_set(username=mqtt_login, password=mqtt_pass)
+
+    if tls_settings:  # if TLS is used
+        _client.tls_set(ca_certs=get_full_path(tls_settings.get("ca_certs")),
+                        certfile=get_full_path(tls_settings.get("certfile")),
+                        keyfile=get_full_path(tls_settings.get("keyfile")))
 
     try:
         _client.connect(broker_url, broker_port, keepalive=10)

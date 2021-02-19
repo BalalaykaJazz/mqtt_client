@@ -31,69 +31,105 @@ def get_current_date() -> str:
     return datetime.utcnow().isoformat() + "Z"
 
 
-def convert_value(value) -> tuple:
-    try:  # maybe float is here
-        return float(value), get_current_date()
-    except ValueError:
-        pass
-
-    try:  # Maybe it's a json
-        value_in_dict = json.loads(value)
-
-        # get value from json
-        if "value" in value_in_dict:
-            value_from_json = value_in_dict.get("value")
-        elif "val" in value_in_dict:
-            value_from_json = value_in_dict.get("val")
-        else:
-            return None, None  # incorrect json
-
-        # get date from json or get current time
-        date = get_current_date() if value_in_dict.get("timestamp") is None else value_in_dict.get("timestamp")
-        date_from_json = get_current_date() if date[:4] == "1970" else date
-
-        return float(value_from_json), date_from_json
-    except json.JSONDecodeError:
-        pass
-
-    return value, get_current_date()  # most likely this is string
+def get_correct_timestamp(ts, current_date) -> str:
+    """Get date from json or get current time"""
+    date = current_date if ts is None else ts
+    date_from_json = current_date if date[:4] == "1970" else date
+    return str(date_from_json)
 
 
 def get_bucket(name_bucket) -> str:
-    """get name "other" if influx table is not created"""
+    """Get name "other" if influx table is not created"""
     return name_bucket if name_bucket in get_settings("used_bucket") else "other"
 
 
-def prepare_data(topic, value) -> dict:
-    """Get names fields to write to Influx"""
-    result = topic.split("/")
-    if len(result) == 3:
-        prepared_data = {"tags": {}}
-    elif len(result) >= 5:
-        prepared_data = {"tags": {"device": result[2].lower()}}
+def convert_to_float(value):
+    """Try to return float otherwise str"""
+    try:
+        return float(value)
+    except ValueError:
+        return value
+
+
+def convert_to_json(value):
+    """Try to return dict otherwise str"""
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
+
+
+def unpacking_response(value) -> tuple:
+
+    current_date = get_current_date()
+
+    # Maybe float is here
+    converted_value = convert_to_float(value)
+    if isinstance(converted_value, float):
+        return {"value": converted_value}, current_date
+
+    # Maybe it's a json
+    converted_value = convert_to_json(value)
+    if isinstance(converted_value, dict):
+        date_from_json = get_correct_timestamp(converted_value.get("timestamp"), current_date)
+
+        if "value" in converted_value:
+            value_from_json = converted_value.get("value")
+        elif "val" in converted_value:
+            value_from_json = converted_value.get("val")
+        else:
+            response = {k: convert_to_float(v) for k, v in converted_value.items() if k != "timestamp"}
+            return response, date_from_json
+
+        return {"value": convert_to_float(value_from_json)}, date_from_json
+
+    # Most likely this is string
+    return {"value": value}, current_date
+
+
+def prepare_data(topic, value) -> list:
+    """Create dictionary to write to influx"""
+    records_list = []
+
+    # Check topic and create dict
+    topic_structure = topic.split("/")
+    if len(topic_structure) == 3:
+        template_tags = {}
+    elif len(topic_structure) >= 5:
+        template_tags = {"device": topic_structure[2].lower()}
     else:
         save_event(f"Unknown topic format: {topic}. Skip")
-        return {}
+        return records_list
 
-    prepared_data["bucket"] = get_bucket(result[1]).lower()  # database
-    prepared_data["measurement"] = result[-1].lower()  # table
+    bucket = get_bucket(topic_structure[1]).lower()  # database
+    measurement = topic_structure[-1].lower()  # table
 
-    unpacked_response = convert_value(value)  # pair converted value and time
-    converted_value = unpacked_response[0]
+    # Read answer from broker
+    unpacked_response = unpacking_response(value)
+    values_dict, time_ = unpacked_response
 
-    if converted_value is None:
-        save_event(f"The value is none from topic: {topic}")
-        return {}
-    elif converted_value is float and int(converted_value) in (-127, -128) \
-            and prepared_data["measurement"] in ("temp_out", "temp_in"):
-        # (-127: controller lost sensor, -128: sensor is initializing)
-        save_event(f"Skip temp {converted_value} from topic: {topic}")
-        return {}
+    for key_, value_ in values_dict.items():
+        if value_ is None:
+            save_event(f"The value is none from topic: {topic}")
+            continue
+        elif isinstance(value_, float) and value_ in (-127.0, -128.0) and measurement in ("temp_out", "temp_in"):
+            # (-127: controller lost sensor, -128: sensor is initializing)
+            # save_event(f"Skip temp {value_} from topic: {topic}")
+            continue
 
-    prepared_data["fields"] = {"value": converted_value}
-    prepared_data["time"] = str(unpacked_response[1])
+        tags = template_tags.copy()
+        if key_ != "value":
+            tags["type"] = key_
 
-    return prepared_data
+        new_record = {"bucket": bucket,
+                      "measurement": measurement + "_info" if isinstance(value_, str) else measurement,
+                      "time": str(time_),
+                      "fields": {"value": value_},
+                      "tags": tags}
+
+        records_list.append(new_record)
+
+    return records_list
 
 
 def write_influx(topic, value):
@@ -103,6 +139,6 @@ def write_influx(topic, value):
         org, write_api = connect
 
         try:
-            write_api.write(bucket=data_to_write.get("bucket"), org=org, record=data_to_write)
+            write_api.write(bucket=data_to_write[0].get("bucket"), org=org, record=data_to_write)
         except rest.ApiException:
             save_event(f"Can't record topic: {topic}; value: {value}")
