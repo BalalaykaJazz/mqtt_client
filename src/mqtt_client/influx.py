@@ -104,7 +104,7 @@ def convert_to_float(value: str) -> Any:
 
     try:
         return float(value)
-    except ValueError:
+    except (ValueError, TypeError):
         return value
 
 
