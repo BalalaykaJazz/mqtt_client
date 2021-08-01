@@ -1,9 +1,5 @@
 # Project exclude paths
 /venv/
-misc.xml
-pod_mqtt_client/settings/
-event_log.txt
-modules.xml
-new_sensor.iml
-vcs.xml
-inspectionprofiles
+/src/mqtt_client/settings/
+/src/mqtt_client/logs/
+src/mqtt_client/.env
