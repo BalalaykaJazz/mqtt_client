@@ -57,7 +57,7 @@ class Settings(BaseSettings):  # pylint: disable = too-few-public-methods
     ca_certs: str = ""
     certfile: str = ""
     keyfile: str = ""
-    tls = {}
+    tls: dict = {}
     mqtt_connection_status = MQTT_CONNECTION_STATUS
 
     # database_settings
@@ -74,13 +74,13 @@ class Settings(BaseSettings):  # pylint: disable = too-few-public-methods
     topics: dict = {}
 
 
-def from_dict_to_namedtuple(name_dict, original_dict) -> tuple:
+def from_dict_to_namedtuple(name_dict, original_dict) -> tuple[str]:
     """Конвертирует настройки из словаря в namedtuple"""
 
     return namedtuple(name_dict, original_dict.keys())(*original_dict.values())
 
 
-def read_file(file_name: str) -> dict:
+def read_file(file_name: str) -> dict[str, str]:
     """
     Функция читает указанный в file_name файл и возвращает словарь с полученными полями.
     """

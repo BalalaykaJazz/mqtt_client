@@ -19,7 +19,7 @@ if not os.path.exists(logs_full_path):
     os.mkdir(logs_full_path)
 
 
-def _get_info_handler():
+def _get_info_handler() -> logging.StreamHandler:
     """Вывод информационного сообщения в консоль"""
     console_handler = logging.StreamHandler(stream=sys.stdout)
     console_handler.setFormatter(SHORT_FORMATTER)
@@ -27,7 +27,7 @@ def _get_info_handler():
     return console_handler
 
 
-def _get_info_handler_log():
+def _get_info_handler_log() -> logging.FileHandler:
     """Запись информационного сообщения в файл"""
     file_handler = logging.FileHandler(filename=EVENT_LOG_FILE)
     file_handler.setFormatter(FORMATTER)
@@ -35,7 +35,7 @@ def _get_info_handler_log():
     return file_handler
 
 
-def _get_error_handler():
+def _get_error_handler() -> logging.StreamHandler:
     """Вывод сообщения об ошибке в консоль"""
     console_handler = logging.StreamHandler(stream=sys.stderr)
     console_handler.setFormatter(SHORT_FORMATTER)
@@ -43,7 +43,7 @@ def _get_error_handler():
     return console_handler
 
 
-def _get_error_handler_log():
+def _get_error_handler_log() -> logging.FileHandler:
     """Запись сообщения об ошибке в файл"""
     file_handler = logging.FileHandler(filename=ERROR_LOG_FILE)
     file_handler.setFormatter(FORMATTER)
@@ -51,7 +51,7 @@ def _get_error_handler_log():
     return file_handler
 
 
-def get_info_logger(logger_name):
+def get_info_logger(logger_name: str) -> logging.Logger:
     """Создание логера для информационных сообщений"""
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
@@ -60,7 +60,7 @@ def get_info_logger(logger_name):
     return logger
 
 
-def get_error_logger(logger_name):
+def get_error_logger(logger_name: str) -> logging.Logger:
     """Создание логера для ошибок"""
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.WARNING)

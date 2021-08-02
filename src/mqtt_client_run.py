@@ -5,10 +5,10 @@
 """
 from time import sleep
 from src.mqtt_client.mqtt import connection_to_broker, start_mqtt,\
-    ClientError, BrokerConnectionError  # pylint: disable = import-error
-from src.mqtt_client.influx import connection_to_influx, DatabaseConnectionError  # pylint: disable = import-error
-import src.mqtt_client.config as config  # pylint: disable = import-error
-from src.mqtt_client.event_logger import get_info_logger, get_error_logger  # pylint: disable = import-error
+    ClientError, BrokerConnectionError
+from src.mqtt_client.influx import connection_to_influx, DatabaseConnectionError
+import src.mqtt_client.config as config
+from src.mqtt_client.event_logger import get_info_logger, get_error_logger
 
 RESTART_TIMEOUT = 60
 event_log = get_info_logger("INFO_mqtt_client_run")

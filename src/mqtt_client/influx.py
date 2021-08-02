@@ -156,7 +156,7 @@ def unpacking_response(value: str) -> tuple:
     return {"value": value}, current_date
 
 
-def get_device_section(topic_structure: list) -> dict:
+def get_device_section(topic_structure: list[str]) -> dict[str, str]:
     """Возвращает словарь с секцией device для записи в БД"""
 
     if len(topic_structure) == 3:
@@ -186,7 +186,7 @@ def skip_record(value: Any, measurement: str, topic: str) -> bool:
     return False
 
 
-def prepare_data(topic: str, value: str) -> list:
+def prepare_data(topic: str, value: str) -> list[dict]:
     """Возвращает список словарей для записи в базу данных."""
 
     records_list: list = []
