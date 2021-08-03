@@ -4,9 +4,9 @@
 Модуль используется для запуска сервиса клиента mqtt.
 """
 from time import sleep
-from src.mqtt_client.mqtt import connection_to_broker, start_mqtt,\
-    ClientError, BrokerConnectionError
-from src.mqtt_client.influx import connection_to_influx, DatabaseConnectionError
+from src.mqtt_client.mqtt import connection_to_broker, start_mqtt
+from src.mqtt_client.common_func import ClientError, BrokerConnectionError
+from src.mqtt_client.database import connection_to_db, DatabaseConnectionError
 import src.mqtt_client.config as config
 from src.mqtt_client.event_logger import get_info_logger, get_error_logger
 
@@ -36,7 +36,7 @@ def start_client():
         return
 
     try:
-        connection_to_influx()
+        connection_to_db()
     except DatabaseConnectionError:
         restart_client("Ошибка при подключении к базе данных")
         return

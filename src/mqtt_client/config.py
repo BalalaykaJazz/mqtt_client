@@ -7,7 +7,7 @@ from collections import namedtuple
 from typing import Any
 from pydantic import BaseSettings
 from .event_logger import get_info_logger, get_error_logger
-from .common_func import get_full_path
+from .common_func import get_full_path, SettingsError
 
 
 TOPICS_PATH = "settings/topics.json"
@@ -22,10 +22,6 @@ MQTT_CONNECTION_STATUS = [
 
 event_log = get_info_logger("INFO_config")
 error_log = get_error_logger("ERR_config")
-
-
-class SettingsError(Exception):
-    """Исключение для ошибок в конфигурационном файле."""
 
 
 class Settings(BaseSettings):  # pylint: disable = too-few-public-methods
@@ -74,7 +70,7 @@ class Settings(BaseSettings):  # pylint: disable = too-few-public-methods
     topics: dict = {}
 
 
-def from_dict_to_namedtuple(name_dict, original_dict) -> tuple[str]:
+def from_dict_to_namedtuple(name_dict, original_dict) -> tuple[Any, ...]:
     """Конвертирует настройки из словаря в namedtuple"""
 
     return namedtuple(name_dict, original_dict.keys())(*original_dict.values())
@@ -144,7 +140,7 @@ def get_setting(setting_name: str) -> Any:
                settings.mqtt_login, settings.mqtt_pass,\
                settings.tls
 
-    if setting_name == "influx_settings":
+    if setting_name == "database_settings":
         return settings.org, settings.token, settings.url
 
     return getattr(settings, setting_name)

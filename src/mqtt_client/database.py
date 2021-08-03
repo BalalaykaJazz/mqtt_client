@@ -5,17 +5,10 @@ from influxdb_client import InfluxDBClient, rest
 from influxdb_client.client.write_api import ASYNCHRONOUS
 from .config import get_setting, json
 from .event_logger import get_info_logger, get_error_logger
+from .common_func import ClientError, DatabaseConnectionError, ErrorTopicFormat
 
-event_log = get_info_logger("INFO_influx")
-error_log = get_error_logger("ERR_influx")
-
-
-class DatabaseConnectionError(Exception):
-    """Исключение для ошибок при подключении к базе данных"""
-
-
-class ErrorTopicFormat(Exception):
-    """Исключение для ошибок в формате темы-источника сообщения"""
+event_log = get_info_logger("INFO_database")
+error_log = get_error_logger("ERR_database")
 
 
 class Connect:
@@ -38,14 +31,14 @@ class Connect:
 connect = Connect()
 
 
-def connection_to_influx():
+def connection_to_db():
     """
     Создание подключения к базе данных.
     Результат подключения записывается в глобальную переменную connect.
     """
 
     # Settings
-    org, token, url = get_setting("influx_settings")
+    org, token, url = get_setting("database_settings")
 
     # Connection
     client = InfluxDBClient(url=url, token=token, org=org)
@@ -239,6 +232,9 @@ def write_to_database(topic: str, value: str):
 
     if data_to_write:
         org, write_api = connect.get_connect()
+
+        if org is None or write_api is None:
+            raise ClientError("Не удалось подключится к базе данных для записи")
 
         try:
             write_api.write(bucket=data_to_write[0].get("bucket"),

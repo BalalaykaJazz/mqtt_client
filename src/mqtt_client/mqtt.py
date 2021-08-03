@@ -2,20 +2,12 @@
 from typing import Any
 import paho.mqtt.client as mqtt
 from .config import get_setting, get_topic
-from .influx import write_to_database
+from .database import write_to_database
 from .event_logger import get_info_logger, get_error_logger
-from .common_func import get_full_path
+from .common_func import get_full_path, ClientError, BrokerConnectionError
 
 event_log = get_info_logger("INFO_mqtt")
 error_log = get_error_logger("ERR_mqtt")
-
-
-class ClientError(Exception):
-    """Исключение для ошибок при работе клиента"""
-
-
-class BrokerConnectionError(Exception):
-    """Исключение для ошибок при подключении к брокеру"""
 
 
 def connection_to_broker() -> mqtt.Client:
