@@ -216,8 +216,25 @@ def prepare_data(topic: str, value: str) -> list[dict]:
                       "tags": tags}
 
         records_list.append(new_record)
+        add_last_online_record(new_record, records_list)
 
     return records_list
+
+
+def add_last_online_record(new_record: dict, records_list: list):
+    """
+    Добавляет запись в служебную таблицу sys_online для определения времени последней активности.
+    """
+
+    current_device = new_record["tags"].get("device")
+
+    if current_device:
+        online_record = {"bucket": new_record["bucket"],
+                         "measurement": "sys_online",
+                         "time": new_record["time"],
+                         "fields": {"device": current_device}}
+
+        records_list.append(online_record)
 
 
 def write_to_database(topic: str, value: str):
