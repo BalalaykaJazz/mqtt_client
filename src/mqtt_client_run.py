@@ -10,7 +10,7 @@ from mqtt_client.database import connection_to_db, DatabaseConnectionError
 import mqtt_client.config as config
 from mqtt_client.event_logger import get_info_logger, get_error_logger
 
-RESTART_TIMEOUT = 60
+RESTART_TIMEOUT = 30
 event_log = get_info_logger("INFO_mqtt_client_run")
 error_log = get_error_logger("ERR_mqtt_client_run")
 

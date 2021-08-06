@@ -141,7 +141,7 @@ def unpacking_response(value: str) -> tuple:
             response = {k: convert_to_float(v)
                         for k, v in converted_value.items()
                         if k != "timestamp"}
-            return {"value": response}, date_from_json
+            return response, date_from_json
 
         return {"value": convert_to_float(value_from_json)}, date_from_json
 
@@ -216,7 +216,9 @@ def prepare_data(topic: str, value: str) -> list[dict]:
                       "tags": tags}
 
         records_list.append(new_record)
-        add_last_online_record(new_record, records_list)
+
+    if records_list:
+        add_last_online_record(records_list[0], records_list)
 
     return records_list
 
