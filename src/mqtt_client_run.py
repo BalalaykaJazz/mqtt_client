@@ -4,11 +4,11 @@
 Модуль используется для запуска сервиса клиента mqtt.
 """
 from time import sleep
-from src.mqtt_client.mqtt import connection_to_broker, start_mqtt
-from src.mqtt_client.common_func import ClientError, BrokerConnectionError
-from src.mqtt_client.database import connection_to_db, DatabaseConnectionError
-import src.mqtt_client.config as config
-from src.mqtt_client.event_logger import get_info_logger, get_error_logger
+from mqtt_client.mqtt import connection_to_broker, start_mqtt
+from mqtt_client.common_func import ClientError, BrokerConnectionError
+from mqtt_client.database import connection_to_db, DatabaseConnectionError
+import mqtt_client.config as config
+from mqtt_client.event_logger import get_info_logger, get_error_logger
 
 RESTART_TIMEOUT = 60
 event_log = get_info_logger("INFO_mqtt_client_run")
