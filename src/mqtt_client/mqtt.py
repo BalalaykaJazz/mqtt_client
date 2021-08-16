@@ -112,5 +112,5 @@ def start_mqtt(client: mqtt.Client):
         if get_setting("is_debug_mode"):
             event_log.info("Завершение соединения с брокером mqtt")
     except Exception as err:
-        error_log.error("start_mqtt error: %s", str(err))
+        error_log.error("Произошла ошибка во время работы клиента. Текст ошибки: %s", str(err))
         raise ClientError  # pylint: disable = raise-missing-from

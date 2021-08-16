@@ -31,7 +31,7 @@ class Connect:
 connect = Connect()
 
 
-def connection_to_db():
+def connection_to_db() -> Optional[InfluxDBClient]:
     """
     Создание подключения к базе данных.
     Результат подключения записывается в глобальную переменную connect.
@@ -44,14 +44,15 @@ def connection_to_db():
     client = InfluxDBClient(url=url, token=token, org=org)
     write_api = client.write_api(write_options=ASYNCHRONOUS)
 
-    if client.health().status == "pass":
-        connect.create_connect(org=org, write_api=write_api)
-        event_log.info("Успешное подключение к базе данных %s", url)
-    else:
+    if client.health().status != "pass":
         error_log.error("Подключение к базе данных %s закончилось ошибкой %s",
                         url,
                         client.health().message)
         raise DatabaseConnectionError
+
+    connect.create_connect(org=org, write_api=write_api)
+    event_log.info("Успешное подключение к базе данных %s", url)
+    return client
 
 
 def get_current_date() -> str:
@@ -259,5 +260,5 @@ def write_to_database(topic: str, value: str):
             write_api.write(bucket=data_to_write[0].get("bucket"),
                             org=org,
                             record=data_to_write)
-        except rest.ApiException:
+        except (rest.ApiException, ValueError):
             error_log.error("Ошибка при записи данных. Топик %s, значение %s", topic, value)

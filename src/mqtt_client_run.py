@@ -4,6 +4,7 @@
 Модуль используется для запуска сервиса клиента mqtt.
 """
 from time import sleep
+from typing import Any
 from mqtt_client.mqtt import connection_to_broker, start_mqtt
 from mqtt_client.common_func import ClientError, BrokerConnectionError
 from mqtt_client.database import connection_to_db, DatabaseConnectionError
@@ -15,8 +16,14 @@ event_log = get_info_logger("INFO_mqtt_client_run")
 error_log = get_error_logger("ERR_mqtt_client_run")
 
 
-def restart_client(message: str):
+def restart_client(message: str, mqtt_connection: Any = None, db_connection: Any = None):
     """Перезапуск клиента после паузы с выводом сообщения."""
+
+    if mqtt_connection is not None:
+        mqtt_connection.disconnect()
+
+    if db_connection is not None:
+        db_connection.close()
 
     error_log.warning("Перезапуск сервиса по причине: %s", message)
     sleep(RESTART_TIMEOUT)
@@ -36,15 +43,15 @@ def start_client():
         return
 
     try:
-        connection_to_db()
+        db_connection = connection_to_db()
     except DatabaseConnectionError:
-        restart_client("Ошибка при подключении к базе данных")
+        restart_client("Ошибка при подключении к базе данных", mqtt_connection)
         return
 
     try:
         start_mqtt(mqtt_connection)
     except ClientError:
-        restart_client("Ошибка при работе клиента")
+        restart_client("Ошибка при работе клиента", mqtt_connection, db_connection)
         return
 
 
