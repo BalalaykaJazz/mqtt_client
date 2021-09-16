@@ -50,6 +50,7 @@ class Settings(BaseSettings):  # pylint: disable = too-few-public-methods
     broker_port: int = 8883
     mqtt_login: str = ""
     mqtt_pass: str = ""
+    use_tls: bool = False
     ca_certs: str = ""
     certfile: str = ""
     keyfile: str = ""
@@ -154,8 +155,10 @@ def get_topic(topic_name: str) -> Any:
 
 settings = Settings(_env_file=get_full_path(".env"),
                     _env_file_encoding="utf-8")
-settings.tls = {"ca_certs": settings.ca_certs,
-                "certfile": settings.certfile,
-                "keyfile": settings.keyfile}
+
+if settings.use_tls and settings.ca_certs and settings.certfile and settings.keyfile:
+    settings.tls = {"ca_certs": settings.ca_certs,
+                    "certfile": settings.certfile,
+                    "keyfile": settings.keyfile}
 
 load_topics()
