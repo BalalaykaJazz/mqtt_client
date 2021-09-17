@@ -153,7 +153,7 @@ def get_topic(topic_name: str) -> Any:
     return getattr(settings.topics, topic_name)
 
 
-settings = Settings(_env_file=get_full_path(".env"),
+settings = Settings(_env_file=get_full_path("settings/.env"),
                     _env_file_encoding="utf-8")
 
 if settings.use_tls and settings.ca_certs and settings.certfile and settings.keyfile:
