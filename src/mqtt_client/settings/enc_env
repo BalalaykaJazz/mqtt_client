@@ -1,0 +1,22 @@
+{
+        "data": "ENC[AES256_GCM,data:kAfwysz2iXHZqPWTFeQRSjtOdnLH/ZlrAjYFixX4Qu3qT6ePeMSBPXM3vvCs82ZgQvaxjnHTHa57wxhCgjsocWAE4uaZjkWkdTjPNh7D92860pMv6arz6ZHqqLcjyGyEgDYlYJUM2aFnw4hD5Gd/nR0kZkaI0xMrYYv7+fRZTJH/p6OaNvHRhzwhU//XbC1ITWlhD+3Cl4Gj7SylwY/DO6whoCWgs6HaenKRrEQutTlo/hUONQbcCe/ono+AZGqPzUABUI7GJjaHzqNeotgrB2phIRZzkGUpo/0DZSIJGxN2iDbFSDHTYI3FDD7G7YTImer3JAvQBUtvXk+kSEtnxnTv4etcOFPgUMRlkT+GGO9ebWi0Tc6GxEzjLjJE3v7ibQi36w8qE/y5gOtln5kpm395oytODPs2GNKNC4N2GZ+Yw82snjTv79vfkCW639msHUX84qgqCWhYDYgQCHXFSFZN+NbRTHpWbTys9Bd+190fl54Taop847NCYlQhPpfA/AhyBMPex571Z+Xh/PVyNI6EYli0KwUNHx2NEQQkeg4YYKgPQRhUNAHes+Xm7ZV1,iv:0lM1DwI9VnpxYbOM3rBCM1ktNfXaVYMz6SYxue1eCIM=,tag:NUgxVW0SnX5qoNzO/VZjPA==,type:str]",
+        "sops": {
+                "kms": null,
+                "gcp_kms": null,
+                "azure_kv": null,
+                "hc_vault": [
+                        {
+                                "vault_address": "https://vault.nnz-ipc.io:8200",
+                                "engine_path": "sops",
+                                "key_name": "iot",
+                                "created_at": "2021-09-30T09:35:21Z",
+                                "enc": "vault:v1:7OGYJU0037DlOxl9pIWoEPd5dMTCmvGY846eDFfAhYO7ywtbW1b7v69mu+981xf/qkmnhK/ETCI65+7O"
+                        }
+                ],
+                "age": null,
+                "lastmodified": "2021-09-30T09:35:21Z",
+                "mac": "ENC[AES256_GCM,data:Er9P0nlOZdNlP8MVz+sZt0kt+52teZOnqXaG4qc7KF78OuaVc3E72Fi9Ri876X5CuWJsqG616YOsifNR6vgxaoWja/rsW0VLoctCM2NJsW/lJQxK7PkD9bEzyCvckdD6fmDBB6rM/87HWP0TDQIlYc+fo0sXnOVrDtSIXAgOH5U=,iv:HUszh0d3ByFSiEcsEWCd2YvOIaVgvSwj/QHNkQwxOvM=,tag:vTBddbWE7nb2aZrnRuZFFQ==,type:str]",
+                "pgp": null,
+                "unencrypted_suffix": "_unencrypted",
+                "version": "3.7.1"
+        }
