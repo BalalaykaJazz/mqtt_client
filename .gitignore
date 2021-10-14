@@ -1,5 +1,9 @@
 # Project exclude paths
 /venv/
-/src/mqtt_client/settings/
+/.pytest_cache/
 /src/mqtt_client/logs/
-src/mqtt_client/.env
+/src/mqtt_client/settings/.env
+/src/mqtt_client/settings/topics.json
+/src/mqtt_client/settings/ca.crt
+/src/mqtt_client/settings/donoff.crt
+/src/mqtt_client/settings/donoff.key
